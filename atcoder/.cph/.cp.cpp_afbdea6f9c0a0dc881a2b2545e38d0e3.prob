@@ -1,0 +1,1 @@
+{"name":"Local: cp","url":"d:\\Aditya Priyadarshi\\cf\\atcoder\\cp.cpp","tests":[{"id":1720698177968,"input":"3\n2\n1 2\n1 2\n5\n1 2\n1 2\n1 3\n1 4\n1 5\n8\n5 4\n7 1\n1 5\n1 8\n8 3\n7 2\n8 6\n3 4\n","output":""}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"d:\\Aditya Priyadarshi\\cf\\atcoder\\cp.cpp","group":"local","local":true}
