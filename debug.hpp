@@ -1,6 +1,8 @@
 #include<bits/stdc++.h>
 using namespace std;
 void __print(long long x) {cerr << x;}
+void __print(int64_t x) {cerr << x;}
+void __print(int32_t x) {cerr << x;}
 void __print(unsigned x) {cerr << x;}
 void __print(unsigned long x) {cerr << x;}
 void __print(unsigned long long x) {cerr << x;}

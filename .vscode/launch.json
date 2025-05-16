@@ -7,9 +7,9 @@
       "request": "launch",
       "args": [],
       "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "d:/Aditya Priyadarshi/cf",
-      "program": "d:/Aditya Priyadarshi/cf/build/Debug/outDebug",
+      "externalConsole": false,
+      "cwd": "/home/ap/cf",
+      "program": "/home/ap/cf/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
