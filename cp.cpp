@@ -1,154 +1,160 @@
 #include <bits/stdc++.h>
+
 using namespace std;
 
-#ifdef LOCAL
-#include "debug.hpp"
-#define dbg(x...) cerr << "[" << #x << "]=["; _print(x)
-#else
-#define dbg(x...) 
-#endif
+#define int long long 
 
-#define inf (long long)1e18
-#define endl "\n"
-#define int long long
-#define x first
-#define y second
-#define all(x) (x).begin(),(x).end() 
-class node_chan
-{
-public:
-    int v = 0;
+#define piii pair<int, pair<int,int>>
 
-    inline void operator+=(node_chan &other)
-    {
-        v += other.v;
-    }
-    inline bool operator<(node_chan &other)
-    {
-        return v < other.v;
-    }
-};
-template <typename T>
-class fenwick_tree_chan
-{
-public:
-    vector<T> fenw;
-    int n;
-    int pw;
 
-    fenwick_tree_chan() : n(0) {}
-    fenwick_tree_chan(int n) : n(n)
-    {
-        fenw.resize(n);
-        pw = (n == 0 ? 0 : 1ULL << (63 - __builtin_clzll(unsigned(n))));
-    }
 
-    // a[x] += v;
-    void modify(int x, T v)
-    {
-        assert(0 <= x && x < n);
-        while (x < n)
-        {
-            fenw[x] += v;
-            x |= x + 1;
-        }
-    }
+int32_t  main() {
 
-    /// sum of prefix [0, .. x] 
-    T query(int x)
-    {
-        ++ x;
-        assert(0 <= x && x <= n);
-        T v{};
-        while (x > 0)
-        {
-            v += fenw[x - 1];
-            x &= x - 1;
-        }
-        return v;
-    }
+	// your code goes here
 
-    // Returns the length of the longest prefix (0 indexed) with sum <= c
-    int max_prefix(T c)
-    {
-        T v{};
-        int at = 0;
-        for (int len = pw; len > 0; len >>= 1)
-        {
-            if (at + len <= n)
-            {
-                auto nv = v;
-                nv += fenw[at + len - 1];
-                if (!(c < nv))
-                {
-                    v = nv;
-                    at += len;
-                }
-            }
-        }
-        assert(0 <= at && at <= n);
-        return at;
-    }
-};
-void solve(int tc)
-{   
-    int n;
-    cin>>n;
-    int x;
-    vector<int>odd;
-    vector<int>even;
-    for(int i=1;i<=n;i++)
-    {
-        cin>>x;
-        if(i%2) odd.push_back(x);
-        else even.push_back(x);
-    }
-    fenwick_tree_chan<int> ds_odd(n+1);
-    fenwick_tree_chan<int> ds_even(n+1);
-    int inv=0;
-    for(int i=0;i<odd.size();i++)
-    {
-        inv+=ds_odd.query(n)-ds_odd.query(odd[i]);
-        ds_odd.modify(odd[i],1);
-    }
-    for(int i=0;i<even.size();i++)
-    {
-        inv+=ds_even.query(n)-ds_even.query(even[i]);
-        ds_even.modify(even[i],1);
-    }
-    sort(all(odd));
-    sort(all(even));
-    vector<int>ar(n);
-    int j=0,k=0;
-    for(int i=1;i<=n;i++)
-    {
-        if(i%2) ar[i-1]=odd[j++];
-        else ar[i-1]=even[k++];
-    }
-    if(inv%2)
-    {
-        swap(ar.back(),ar[n-3]);
-    }
-    for(auto i:ar) cout<<i<<" ";
-    cout<<endl;
-}   
-int32_t main()      
-{   
-    #ifdef LOCAL1
-        auto begin = std::chrono::high_resolution_clock::now();
-    #endif
-    ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
-    int t=1;
-    cin>>t;
-    int tc=1;
-    while (t--)
-    {
-        solve(tc),tc++;
-    }
-    #ifdef LOCAL1
-        auto end = std::chrono::high_resolution_clock::now();
-        cerr << setprecision(4) << fixed;
-        cerr << "-> " << std::chrono::duration_cast<std::chrono::duration<double>>(end - begin).count() << " sec" << endl;
-    #endif
-    return 0;
+	int t; cin>>t; while(t--)
+
+	{
+
+	    int n, m, s, t; cin>>n>>m>>s>>t;
+
+	    
+
+	    vector<pair<int,int>>adj[n+1][26]; // here we have to create a adjanency list which is defind as below
+
+	    // adj is a 2d matrix with n+1 rows and 26 columns and each element of matrix is a vector of pairs 
+
+	    
+
+	    for(int i = 0; i<m; i++)
+
+	    {
+
+	        int u, v, wt ; cin>>u>>v>>wt;
+
+	        char c; cin>>c;
+
+	                                            // taking the inputs 
+
+	        adj[u][c - 'a'].push_back({v,wt});
+
+	        adj[v][c - 'a'].push_back({u,wt});
+
+	    }
+
+	    
+
+	    vector<vector<int>>dist(n+1, vector<int>(n+1, 1e18));
+
+	    // dist[i][j] --> indicates cost from travelling from s to i and from j to t in a palindromic path 
+
+	    // thus a path is completed if (i == j ) OR i and j are connected 
+
+	    
+
+	    int ans = 1e18;
+
+	    
+
+	    dist[s][t] = 0; // base case 
+
+	    
+
+	    priority_queue<piii, vector<piii>, greater<piii>>pq; // using a priority queue and solving it in a dijkstra manner 
+
+	    
+
+	    pq.push({0, {s, t}}); // initally cost is 0 and start is at s and end is at t
+
+	    
+
+	    while(!pq.empty())
+
+	    {
+
+	        int wt = pq.top().first;
+
+	        int start = pq.top().second.first;
+
+	        int end = pq.top().second.second;
+
+	        
+
+	        pq.pop();
+
+	        
+
+	        if(dist[start][end] < wt)  continue; 
+
+	        
+
+	        if(start == end)
+
+	        {
+
+	            ans = min(ans, wt);     // checking for path completion 
+
+	        }
+
+	        
+
+	        for(int i = 0; i<26; i++) // palindromic walk can occur iff both have same character in their next traversal 
+
+	        {
+
+	            for(auto it: adj[start][i])
+
+	            {
+
+	                if(it.first == end) // path completion checking if start and end are connected 
+
+	                {
+
+	                    ans = min(ans, wt+ it.second);
+
+	                }
+
+	                
+
+	                for(auto p:adj[end][i])
+
+	                {
+
+	                    int n1 = it.first; int n2 = p.first;
+
+	                    int wt1 = it.second, wt2 = p.second;
+
+	                    
+
+	                    if(dist[n1][n2] > wt2 + wt1 + wt)
+
+	                    {
+
+	                        dist[n1][n2] = wt  + wt1 + wt2;
+
+	                        pq.push({dist[n1][n2], {n1, n2}}); // updating the distance array and pushing it into pq 
+
+	                    }
+
+	                    
+
+	                    
+
+	                }
+
+	            }
+
+	        }
+
+	        
+
+	    }
+
+	        ans == 1e18 ? ans = -1: ans; // checking if ans doesn't exist 
+
+	        cout<<ans<<endl;
+
+	}
+
 }
+

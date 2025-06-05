@@ -1,48 +1,63 @@
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <atcoder/convolution>  // AtCoder library header for convolution_ll
+#include <bits/stdc++.h>
+#include <atcoder/modint>
 
 using namespace std;
-using ll = long long;
+using namespace atcoder;
+using mint = modint998244353;
 
-int main(){
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+#define N 60
 
-    int n;
-    cin >> n;
+mint c[N+1][N+1]; //c[i][j]=(the number of x  s.t. 0<=x<(2^i), popcount(x)=j) for 0<=j<=i<=60
+mint s[N+1][N+1]; //s[i][j]=(the sum    of x  s.t. 0<=x<(2^i), popcount(x)=j) for 0<=j<=i<=60
 
-    // Read the array and find maximum value (M)
-    vector<int> arr(n);
-    int M = 0;
-    for (int i = 0; i < n; i++){
-        cin >> arr[i];
-        M = max(M, arr[i]);
-    }
+void preset(void){
+	for(int i=0;i<=N;i++)for(int j=0;j<=N;j++){
+		c[i][j]=0,s[i][j]=0;
+	}
+	c[0][0]=1;
+	for(int i=0;i<60;i++){
+		for(int j=0;j<=i;j++){
+			c[i+1][j+1]+=c[i][j];
+			s[i+1][j+1]+=s[i][j];
+			s[i+1][j+1]+=(c[i][j]*((mint)2).pow(i));
+			c[i+1][j]+=c[i][j];
+			s[i+1][j]+=s[i][j];
+		}
+	}
+	return;
+}
 
-    // Build frequency array: F[v] = # of times v appears (v in [0, M])
-    vector<ll> freq(M + 1, 0);
-    for (int i = 0; i < n; i++){
-        freq[arr[i]]++;
-    }
+int solve(long long n,int k){
+	int a[N];
+	for(int i=0;i<N;i++){
+		a[i]=n&1;
+		n=(n>>1);
+	}
+	int cur=0;
+	mint offset=0;
+	mint ans=0;
+	for(int i=N-1;i>=0;i--){
+		if(a[i]==1){
+			if(cur<=k){
+				ans+=s[i][k-cur];
+				ans+=offset*c[i][k-cur];
+			}
+			cur++;
+			offset+=((mint)2).pow(i);
+		}
+	}
+	if(cur==k)ans+=offset;
+	return (ans.val());
+}
 
-    // Build the reversed frequency array: rev[i] = freq[M - i]
-    vector<ll> freq_rev = freq;
-    reverse(freq_rev.begin(), freq_rev.end());
-
-    // Compute convolution using AtCoder's convolution_ll.
-    // The convolution calculates c[k] = sum_{i+j=k} freq[i]*freq_rev[j].
-    vector<ll> conv = atcoder::convolution_ll(freq, freq_rev);
-    // conv will have size (M+1 + M+1 - 1) = 2*M + 1.
-
-    // For differences d from -M to M, we have:
-    //    f[d] = conv[M - d]
-    // because index M in conv corresponds to difference 0.
-    for (int d = -M; d <= M; d++){
-        ll count = conv[M - d];
-        cout << "f[" << d << "] = " << count << "\n";
-    }
-
-    return 0;
+int main(void){
+	preset();
+	int t,k;
+	long long n;
+	cin>>t;
+	for(int i=0;i<t;i++){
+		cin>>n>>k;
+		cout<<solve(n,k)<<endl;
+	}
+	return 0;
 }
