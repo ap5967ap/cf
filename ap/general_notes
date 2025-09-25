@@ -1,0 +1,30 @@
+
+//for ternary searching on an integer number line, you just need to divide 
+// [l, r] into three approximately equal parts, and stop when (r - l) < 3
+// at this point, just check all the values in [l, r] manually
+
+
+// __builtin_clzll(x): the number of zeros at the beginning of the number
+// __builtin_ctzll(x): the number of zeros at the end of the number
+// __builtin_popcount(x): the number of ones in the number
+// __builtin_parity(x): the parity (even or odd) of the number of ones
+// n & (n-1) removes the last set bit from LSB 
+// n & (-n) gives the last set bit from LSB
+// n & (n+1)  clears all trailing ONES
+// n | (n+1)  sets the last cleared bit 0011 0101 -> 0011 0111
+// a+b=(a^b)+2(a&b) = (a|b) + (a&b) 
+
+// From any set S of (2n - 1) integers, you can always choose a subset P of n integers,
+//  such that the sum of all integers in it is divisible by n." 
+
+
+//There is always atleast one prime p lying in (n, 2n] for all n
+
+
+// In any array (assume that we have permutation of n distinct integers for simplicity), we must have atleast one of the following: 
+// 1. An increasing subsequence of length (>= sqrt(n)).
+// 2. A decreasing subsequence of length (>= sqrt(n)).
+
+// Any non-negative integer can be expressed as the sum of 4 squares
+
+

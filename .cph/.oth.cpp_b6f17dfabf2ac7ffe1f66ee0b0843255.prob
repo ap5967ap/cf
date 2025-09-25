@@ -1,1 +1,1 @@
-{"name":"Local: oth","url":"/home/ap/cf/oth.cpp","tests":[{"id":1739223811214,"input":"1\n5\n-1 0 -1 2 -1\n","output":""}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/home/ap/cf/oth.cpp","group":"local","local":true}
+{"name":"Local: oth","url":"/home/ap/cf/oth.cpp","tests":[],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/home/ap/cf/oth.cpp","group":"local","local":true}

@@ -14,117 +14,67 @@ using namespace std;
 #define x first
 #define y second
 #define all(x) (x).begin(),(x).end() 
-class SegmentTree {
-    private:
-        int n;
-        vector<long long> tree;
-    
-        void build(int node, int l, int r) {
-            if (l == r) {
-                tree[node] = 1;
-            } else {
-                int mid = (l + r) / 2;
-                build(2 * node + 1, l, mid);
-                build(2 * node + 2, mid + 1, r);
-                tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
-            }
-        }
-    
-        long long query(int node, int l, int r, int ql, int qr) {
-            if (qr < l || r < ql) return 0;          // No overlap
-            if (ql <= l && r <= qr) return tree[node]; // Total overlap
-            int mid = (l + r) / 2;
-            return query(2 * node + 1, l, mid, ql, qr) +
-                   query(2 * node + 2, mid + 1, r, ql, qr);
-        }
-    
-        void update(int node, int l, int r, int idx, int val) {
-            if (l == r) {
-                tree[node] = val;
-            } else {
-                int mid = (l + r) / 2;
-                if (idx <= mid)
-                    update(2 * node + 1, l, mid, idx, val);
-                else
-                    update(2 * node + 2, mid + 1, r, idx, val);
-                tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
-            }
-        }
-    
-    public:
-        SegmentTree(int n) {
-            tree.resize(4 * n);
-            build(0, 0, n - 1);
-        }
-    
-        long long query(int l, int r) {
-            return query(0, 0, n - 1, l, r);
-        }
-    
-        void update(int idx, int val) {
-            update(0, 0, n - 1, idx, val);
-        }
-    };
-    
+
 void solve(int tc)
 {   
     int n;
     cin>>n;
-    vector<vector<int>>g(n);
-    map<int,pair<int,int>>mp;
-    for(int i=0;i<n-1;i++) 
+    int N=n;
+    n=pow(3,n);
+    string s;
+    cin>>s;
+    int sz=1,add=1;
+    for(int i=0;i<N;i++)
     {
-        int a,b;
-        cin>>a>>b;
-        g[a-1].push_back(b-1);
-        g[b-1].push_back(a-1);
-        mp[i]={a-1,b-1};
+        add*=3;
+        sz+=add;
     }
-    SegmentTree s(n);
-    vector<int>st(n);
-    vector<int>en(n);
-    int tt=0;
-    int tot=n;
-    auto dfs=[&](int u, int p, auto &&dfs)->void
+    vector<int>v(sz+1);
+    vector<array<int,2>>dp(sz+1,{-1,-1});
+    int i=sz-add+1;
+    for(int j=0;j<n;j++)
     {
-        st[u]=tt++;
-        for(auto v:g[u])
+        v[i]=(s[j]-'0');
+        if((s[j]-'0')) dp[i]={1,0};
+        else dp[i]={0,1};
+    }
+    i=sz-add;
+    while(i>0)
+    {
+        int c1=3*i-1;
+        int c2=3*i;
+        int c3=3*i+1;
+        if(v[c1]+v[c2]+v[c3]>=2) v[i]=1;
+        else v[i]=0;
+        i--;
+    }
+    auto dfs=[&](int u, int val, auto &&dfs)->int
+    {
+        if(dp[u][val]!=-1) return dp[u][val];
+        int cnt=0;
+        int c1=3*i-1;
+        int c2=3*i;
+        int c3=3*i+1;
+        if(v[c1]==val) cnt++;
+        if(v[c2]==val) cnt++;
+        if(v[c3]==val) cnt++;
+        if(cnt>=2) 
         {
-            if(v!=p)
-            {
-                dfs(v,u,dfs);
-            }
+            dp[u][val]=0;
         }
-        en[u]=tt-1;
-    };
-    dfs(0,-1,dfs);
-    int q;
-    cin>>q;
-    while(q--)
-    {
-        int t;
-        cin>>t;
-        if(t==1)
+        else if(cnt==1)
         {
-            int node,v;
-            cin>>node>>v;
-            --node;
-            // s.update(st[node],v);
-            tot+=v;
-            return;
+            int v1=dfs(c1,val,dfs),v2=dfs(c2,val,dfs),v3=dfs(c3,val,dfs);
+            dp[u][val]=min({v1,v2,v3});
         }
         else
         {
-            int i;
-            cin>>i;
-            auto [u,v]=mp[i-1];
-            int node=u;
-            if(st[u]<st[v]) node=v;
-            dbg(st[node],en[node]);
-            int val=s.query(st[node],en[node]);
-            cout<<abs(tot-2*val)<<endl;
+            int v1=dfs(c1,val,dfs),v2=dfs(c2,val,dfs),v3=dfs(c3,val,dfs);
+            dp[u][val]=v1+v2+v3-max({v1,v2,v3});
         }
-    }
+        return dp[u][val];
+    };
+    cout<<dfs(1,1-v[1],dfs);
 }   
 int32_t main()      
 {   

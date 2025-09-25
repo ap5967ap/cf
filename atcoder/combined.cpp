@@ -1,267 +1,52 @@
 #include <bits/stdc++.h>
 
+#include <algorithm>
 #include <cassert>
-#include <numeric>
-#include <type_traits>
+#include <functional>
+#include <vector>
+
 
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
 
-
-#include <utility>
-
-#ifdef _MSC_VER
-#include <intrin.h>
+#if __cplusplus >= 202002L
+#include <bit>
 #endif
 
 namespace atcoder {
 
 namespace internal {
 
-constexpr long long safe_mod(long long x, long long m) {
-    x %= m;
-    if (x < 0) x += m;
+#if __cplusplus >= 202002L
+
+using std::bit_ceil;
+
+#else
+
+unsigned int bit_ceil(unsigned int n) {
+    unsigned int x = 1;
+    while (x < (unsigned int)(n)) x *= 2;
     return x;
 }
 
-struct barrett {
-    unsigned int _m;
-    unsigned long long im;
+#endif
 
-    explicit barrett(unsigned int m) : _m(m), im((unsigned long long)(-1) / m + 1) {}
-
-    unsigned int umod() const { return _m; }
-
-    unsigned int mul(unsigned int a, unsigned int b) const {
-
-        unsigned long long z = a;
-        z *= b;
+int countr_zero(unsigned int n) {
 #ifdef _MSC_VER
-        unsigned long long x;
-        _umul128(z, im, &x);
+    unsigned long index;
+    _BitScanForward(&index, n);
+    return index;
 #else
-        unsigned long long x =
-            (unsigned long long)(((unsigned __int128)(z)*im) >> 64);
+    return __builtin_ctz(n);
 #endif
-        unsigned long long y = x * _m;
-        return (unsigned int)(z - y + (z < y ? _m : 0));
-    }
-};
-
-constexpr long long pow_mod_constexpr(long long x, long long n, int m) {
-    if (m == 1) return 0;
-    unsigned int _m = (unsigned int)(m);
-    unsigned long long r = 1;
-    unsigned long long y = safe_mod(x, m);
-    while (n) {
-        if (n & 1) r = (r * y) % _m;
-        y = (y * y) % _m;
-        n >>= 1;
-    }
-    return r;
 }
 
-constexpr bool is_prime_constexpr(int n) {
-    if (n <= 1) return false;
-    if (n == 2 || n == 7 || n == 61) return true;
-    if (n % 2 == 0) return false;
-    long long d = n - 1;
-    while (d % 2 == 0) d /= 2;
-    constexpr long long bases[3] = {2, 7, 61};
-    for (long long a : bases) {
-        long long t = d;
-        long long y = pow_mod_constexpr(a, t, n);
-        while (t != n - 1 && y != 1 && y != n - 1) {
-            y = y * y % n;
-            t <<= 1;
-        }
-        if (y != n - 1 && t % 2 == 0) {
-            return false;
-        }
-    }
-    return true;
+constexpr int countr_zero_constexpr(unsigned int n) {
+    int x = 0;
+    while (!(n & (1 << x))) x++;
+    return x;
 }
-template <int n> constexpr bool is_prime = is_prime_constexpr(n);
-
-constexpr std::pair<long long, long long> inv_gcd(long long a, long long b) {
-    a = safe_mod(a, b);
-    if (a == 0) return {b, 0};
-
-    long long s = b, t = a;
-    long long m0 = 0, m1 = 1;
-
-    while (t) {
-        long long u = s / t;
-        s -= t * u;
-        m0 -= m1 * u;  // |m1 * u| <= |m1| * s <= b
-
-
-        auto tmp = s;
-        s = t;
-        t = tmp;
-        tmp = m0;
-        m0 = m1;
-        m1 = tmp;
-    }
-    if (m0 < 0) m0 += b / s;
-    return {s, m0};
-}
-
-constexpr int primitive_root_constexpr(int m) {
-    if (m == 2) return 1;
-    if (m == 167772161) return 3;
-    if (m == 469762049) return 3;
-    if (m == 754974721) return 11;
-    if (m == 998244353) return 3;
-    int divs[20] = {};
-    divs[0] = 2;
-    int cnt = 1;
-    int x = (m - 1) / 2;
-    while (x % 2 == 0) x /= 2;
-    for (int i = 3; (long long)(i)*i <= x; i += 2) {
-        if (x % i == 0) {
-            divs[cnt++] = i;
-            while (x % i == 0) {
-                x /= i;
-            }
-        }
-    }
-    if (x > 1) {
-        divs[cnt++] = x;
-    }
-    for (int g = 2;; g++) {
-        bool ok = true;
-        for (int i = 0; i < cnt; i++) {
-            if (pow_mod_constexpr(g, (m - 1) / divs[i], m) == 1) {
-                ok = false;
-                break;
-            }
-        }
-        if (ok) return g;
-    }
-}
-template <int m> constexpr int primitive_root = primitive_root_constexpr(m);
-
-unsigned long long floor_sum_unsigned(unsigned long long n,
-                                      unsigned long long m,
-                                      unsigned long long a,
-                                      unsigned long long b) {
-    unsigned long long ans = 0;
-    while (true) {
-        if (a >= m) {
-            ans += n * (n - 1) / 2 * (a / m);
-            a %= m;
-        }
-        if (b >= m) {
-            ans += n * (b / m);
-            b %= m;
-        }
-
-        unsigned long long y_max = a * n + b;
-        if (y_max < m) break;
-        n = (unsigned long long)(y_max / m);
-        b = (unsigned long long)(y_max % m);
-        std::swap(m, a);
-    }
-    return ans;
-}
-
-}  // namespace internal
-
-}  // namespace atcoder
-
-
-#include <cassert>
-#include <numeric>
-#include <type_traits>
-
-namespace atcoder {
-
-namespace internal {
-
-#ifndef _MSC_VER
-template <class T>
-using is_signed_int128 =
-    typename std::conditional<std::is_same<T, __int128_t>::value ||
-                                  std::is_same<T, __int128>::value,
-                              std::true_type,
-                              std::false_type>::type;
-
-template <class T>
-using is_unsigned_int128 =
-    typename std::conditional<std::is_same<T, __uint128_t>::value ||
-                                  std::is_same<T, unsigned __int128>::value,
-                              std::true_type,
-                              std::false_type>::type;
-
-template <class T>
-using make_unsigned_int128 =
-    typename std::conditional<std::is_same<T, __int128_t>::value,
-                              __uint128_t,
-                              unsigned __int128>;
-
-template <class T>
-using is_integral = typename std::conditional<std::is_integral<T>::value ||
-                                                  is_signed_int128<T>::value ||
-                                                  is_unsigned_int128<T>::value,
-                                              std::true_type,
-                                              std::false_type>::type;
-
-template <class T>
-using is_signed_int = typename std::conditional<(is_integral<T>::value &&
-                                                 std::is_signed<T>::value) ||
-                                                    is_signed_int128<T>::value,
-                                                std::true_type,
-                                                std::false_type>::type;
-
-template <class T>
-using is_unsigned_int =
-    typename std::conditional<(is_integral<T>::value &&
-                               std::is_unsigned<T>::value) ||
-                                  is_unsigned_int128<T>::value,
-                              std::true_type,
-                              std::false_type>::type;
-
-template <class T>
-using to_unsigned = typename std::conditional<
-    is_signed_int128<T>::value,
-    make_unsigned_int128<T>,
-    typename std::conditional<std::is_signed<T>::value,
-                              std::make_unsigned<T>,
-                              std::common_type<T>>::type>::type;
-
-#else
-
-template <class T> using is_integral = typename std::is_integral<T>;
-
-template <class T>
-using is_signed_int =
-    typename std::conditional<is_integral<T>::value && std::is_signed<T>::value,
-                              std::true_type,
-                              std::false_type>::type;
-
-template <class T>
-using is_unsigned_int =
-    typename std::conditional<is_integral<T>::value &&
-                                  std::is_unsigned<T>::value,
-                              std::true_type,
-                              std::false_type>::type;
-
-template <class T>
-using to_unsigned = typename std::conditional<is_signed_int<T>::value,
-                                              std::make_unsigned<T>,
-                                              std::common_type<T>>::type;
-
-#endif
-
-template <class T>
-using is_signed_int_t = std::enable_if_t<is_signed_int<T>::value>;
-
-template <class T>
-using is_unsigned_int_t = std::enable_if_t<is_unsigned_int<T>::value>;
-
-template <class T> using to_unsigned_t = typename to_unsigned<T>::type;
 
 }  // namespace internal
 
@@ -270,322 +55,487 @@ template <class T> using to_unsigned_t = typename to_unsigned<T>::type;
 
 namespace atcoder {
 
-namespace internal {
+#if __cplusplus >= 201703L
 
-struct modint_base {};
-struct static_modint_base : modint_base {};
+template <class S,
+          auto op,
+          auto e,
+          class F,
+          auto mapping,
+          auto composition,
+          auto id>
+struct lazy_segtree {
+    static_assert(std::is_convertible_v<decltype(op), std::function<S(S, S)>>,
+                  "op must work as S(S, S)");
+    static_assert(std::is_convertible_v<decltype(e), std::function<S()>>,
+                  "e must work as S()");
+    static_assert(
+        std::is_convertible_v<decltype(mapping), std::function<S(F, S)>>,
+        "mapping must work as F(F, S)");
+    static_assert(
+        std::is_convertible_v<decltype(composition), std::function<F(F, F)>>,
+        "compostiion must work as F(F, F)");
+    static_assert(std::is_convertible_v<decltype(id), std::function<F()>>,
+                  "id must work as F()");
 
-template <class T> using is_modint = std::is_base_of<modint_base, T>;
-template <class T> using is_modint_t = std::enable_if_t<is_modint<T>::value>;
+#else
 
-}  // namespace internal
+template <class S,
+          S (*op)(S, S),
+          S (*e)(),
+          class F,
+          S (*mapping)(F, S),
+          F (*composition)(F, F),
+          F (*id)()>
+struct lazy_segtree {
 
-template <int m, std::enable_if_t<(1 <= m)>* = nullptr>
-struct static_modint : internal::static_modint_base {
-    using mint = static_modint;
+#endif
 
   public:
-    static constexpr int mod() { return m; }
-    static mint raw(int v) {
-        mint x;
-        x._v = v;
-        return x;
-    }
-
-    static_modint() : _v(0) {}
-    template <class T, internal::is_signed_int_t<T>* = nullptr>
-    static_modint(T v) {
-        long long x = (long long)(v % (long long)(umod()));
-        if (x < 0) x += umod();
-        _v = (unsigned int)(x);
-    }
-    template <class T, internal::is_unsigned_int_t<T>* = nullptr>
-    static_modint(T v) {
-        _v = (unsigned int)(v % umod());
-    }
-
-    unsigned int val() const { return _v; }
-
-    mint& operator++() {
-        _v++;
-        if (_v == umod()) _v = 0;
-        return *this;
-    }
-    mint& operator--() {
-        if (_v == 0) _v = umod();
-        _v--;
-        return *this;
-    }
-    mint operator++(int) {
-        mint result = *this;
-        ++*this;
-        return result;
-    }
-    mint operator--(int) {
-        mint result = *this;
-        --*this;
-        return result;
-    }
-
-    mint& operator+=(const mint& rhs) {
-        _v += rhs._v;
-        if (_v >= umod()) _v -= umod();
-        return *this;
-    }
-    mint& operator-=(const mint& rhs) {
-        _v -= rhs._v;
-        if (_v >= umod()) _v += umod();
-        return *this;
-    }
-    mint& operator*=(const mint& rhs) {
-        unsigned long long z = _v;
-        z *= rhs._v;
-        _v = (unsigned int)(z % umod());
-        return *this;
-    }
-    mint& operator/=(const mint& rhs) { return *this = *this * rhs.inv(); }
-
-    mint operator+() const { return *this; }
-    mint operator-() const { return mint() - *this; }
-
-    mint pow(long long n) const {
-        assert(0 <= n);
-        mint x = *this, r = 1;
-        while (n) {
-            if (n & 1) r *= x;
-            x *= x;
-            n >>= 1;
-        }
-        return r;
-    }
-    mint inv() const {
-        if (prime) {
-            assert(_v);
-            return pow(umod() - 2);
-        } else {
-            auto eg = internal::inv_gcd(_v, m);
-            assert(eg.first == 1);
-            return eg.second;
+    lazy_segtree() : lazy_segtree(0) {}
+    explicit lazy_segtree(int n) : lazy_segtree(std::vector<S>(n, e())) {}
+    explicit lazy_segtree(const std::vector<S>& v) : _n(int(v.size())) {
+        size = (int)internal::bit_ceil((unsigned int)(_n));
+        log = internal::countr_zero((unsigned int)size);
+        d = std::vector<S>(2 * size, e());
+        lz = std::vector<F>(size, id());
+        for (int i = 0; i < _n; i++) d[size + i] = v[i];
+        for (int i = size - 1; i >= 1; i--) {
+            update(i);
         }
     }
 
-    friend mint operator+(const mint& lhs, const mint& rhs) {
-        return mint(lhs) += rhs;
+    void set(int p, S x) {
+        assert(0 <= p && p < _n);
+        p += size;
+        for (int i = log; i >= 1; i--) push(p >> i);
+        d[p] = x;
+        for (int i = 1; i <= log; i++) update(p >> i);
     }
-    friend mint operator-(const mint& lhs, const mint& rhs) {
-        return mint(lhs) -= rhs;
+
+    S get(int p) {
+        assert(0 <= p && p < _n);
+        p += size;
+        for (int i = log; i >= 1; i--) push(p >> i);
+        return d[p];
     }
-    friend mint operator*(const mint& lhs, const mint& rhs) {
-        return mint(lhs) *= rhs;
+
+    S prod(int l, int r) {
+        assert(0 <= l && l <= r && r <= _n);
+        if (l == r) return e();
+
+        l += size;
+        r += size;
+
+        for (int i = log; i >= 1; i--) {
+            if (((l >> i) << i) != l) push(l >> i);
+            if (((r >> i) << i) != r) push((r - 1) >> i);
+        }
+
+        S sml = e(), smr = e();
+        while (l < r) {
+            if (l & 1) sml = op(sml, d[l++]);
+            if (r & 1) smr = op(d[--r], smr);
+            l >>= 1;
+            r >>= 1;
+        }
+
+        return op(sml, smr);
     }
-    friend mint operator/(const mint& lhs, const mint& rhs) {
-        return mint(lhs) /= rhs;
+
+    S all_prod() { return d[1]; }
+
+    void apply(int p, F f) {
+        assert(0 <= p && p < _n);
+        p += size;
+        for (int i = log; i >= 1; i--) push(p >> i);
+        d[p] = mapping(f, d[p]);
+        for (int i = 1; i <= log; i++) update(p >> i);
     }
-    friend bool operator==(const mint& lhs, const mint& rhs) {
-        return lhs._v == rhs._v;
+    void apply(int l, int r, F f) {
+        assert(0 <= l && l <= r && r <= _n);
+        if (l == r) return;
+
+        l += size;
+        r += size;
+
+        for (int i = log; i >= 1; i--) {
+            if (((l >> i) << i) != l) push(l >> i);
+            if (((r >> i) << i) != r) push((r - 1) >> i);
+        }
+
+        {
+            int l2 = l, r2 = r;
+            while (l < r) {
+                if (l & 1) all_apply(l++, f);
+                if (r & 1) all_apply(--r, f);
+                l >>= 1;
+                r >>= 1;
+            }
+            l = l2;
+            r = r2;
+        }
+
+        for (int i = 1; i <= log; i++) {
+            if (((l >> i) << i) != l) update(l >> i);
+            if (((r >> i) << i) != r) update((r - 1) >> i);
+        }
     }
-    friend bool operator!=(const mint& lhs, const mint& rhs) {
-        return lhs._v != rhs._v;
+
+    template <bool (*g)(S)> int max_right(int l) {
+        return max_right(l, [](S x) { return g(x); });
+    }
+    template <class G> int max_right(int l, G g) {
+        assert(0 <= l && l <= _n);
+        assert(g(e()));
+        if (l == _n) return _n;
+        l += size;
+        for (int i = log; i >= 1; i--) push(l >> i);
+        S sm = e();
+        do {
+            while (l % 2 == 0) l >>= 1;
+            if (!g(op(sm, d[l]))) {
+                while (l < size) {
+                    push(l);
+                    l = (2 * l);
+                    if (g(op(sm, d[l]))) {
+                        sm = op(sm, d[l]);
+                        l++;
+                    }
+                }
+                return l - size;
+            }
+            sm = op(sm, d[l]);
+            l++;
+        } while ((l & -l) != l);
+        return _n;
+    }
+
+    template <bool (*g)(S)> int min_left(int r) {
+        return min_left(r, [](S x) { return g(x); });
+    }
+    template <class G> int min_left(int r, G g) {
+        assert(0 <= r && r <= _n);
+        assert(g(e()));
+        if (r == 0) return 0;
+        r += size;
+        for (int i = log; i >= 1; i--) push((r - 1) >> i);
+        S sm = e();
+        do {
+            r--;
+            while (r > 1 && (r % 2)) r >>= 1;
+            if (!g(op(d[r], sm))) {
+                while (r < size) {
+                    push(r);
+                    r = (2 * r + 1);
+                    if (g(op(d[r], sm))) {
+                        sm = op(d[r], sm);
+                        r--;
+                    }
+                }
+                return r + 1 - size;
+            }
+            sm = op(d[r], sm);
+        } while ((r & -r) != r);
+        return 0;
     }
 
   private:
-    unsigned int _v;
-    static constexpr unsigned int umod() { return m; }
-    static constexpr bool prime = internal::is_prime<m>;
+    int _n, size, log;
+    std::vector<S> d;
+    std::vector<F> lz;
+
+    void update(int k) { d[k] = op(d[2 * k], d[2 * k + 1]); }
+    void all_apply(int k, F f) {
+        d[k] = mapping(f, d[k]);
+        if (k < size) lz[k] = composition(f, lz[k]);
+    }
+    void push(int k) {
+        all_apply(2 * k, lz[k]);
+        all_apply(2 * k + 1, lz[k]);
+        lz[k] = id();
+    }
 };
-
-template <int id> struct dynamic_modint : internal::modint_base {
-    using mint = dynamic_modint;
-
-  public:
-    static int mod() { return (int)(bt.umod()); }
-    static void set_mod(int m) {
-        assert(1 <= m);
-        bt = internal::barrett(m);
-    }
-    static mint raw(int v) {
-        mint x;
-        x._v = v;
-        return x;
-    }
-
-    dynamic_modint() : _v(0) {}
-    template <class T, internal::is_signed_int_t<T>* = nullptr>
-    dynamic_modint(T v) {
-        long long x = (long long)(v % (long long)(mod()));
-        if (x < 0) x += mod();
-        _v = (unsigned int)(x);
-    }
-    template <class T, internal::is_unsigned_int_t<T>* = nullptr>
-    dynamic_modint(T v) {
-        _v = (unsigned int)(v % mod());
-    }
-
-    unsigned int val() const { return _v; }
-
-    mint& operator++() {
-        _v++;
-        if (_v == umod()) _v = 0;
-        return *this;
-    }
-    mint& operator--() {
-        if (_v == 0) _v = umod();
-        _v--;
-        return *this;
-    }
-    mint operator++(int) {
-        mint result = *this;
-        ++*this;
-        return result;
-    }
-    mint operator--(int) {
-        mint result = *this;
-        --*this;
-        return result;
-    }
-
-    mint& operator+=(const mint& rhs) {
-        _v += rhs._v;
-        if (_v >= umod()) _v -= umod();
-        return *this;
-    }
-    mint& operator-=(const mint& rhs) {
-        _v += mod() - rhs._v;
-        if (_v >= umod()) _v -= umod();
-        return *this;
-    }
-    mint& operator*=(const mint& rhs) {
-        _v = bt.mul(_v, rhs._v);
-        return *this;
-    }
-    mint& operator/=(const mint& rhs) { return *this = *this * rhs.inv(); }
-
-    mint operator+() const { return *this; }
-    mint operator-() const { return mint() - *this; }
-
-    mint pow(long long n) const {
-        assert(0 <= n);
-        mint x = *this, r = 1;
-        while (n) {
-            if (n & 1) r *= x;
-            x *= x;
-            n >>= 1;
-        }
-        return r;
-    }
-    mint inv() const {
-        auto eg = internal::inv_gcd(_v, mod());
-        assert(eg.first == 1);
-        return eg.second;
-    }
-
-    friend mint operator+(const mint& lhs, const mint& rhs) {
-        return mint(lhs) += rhs;
-    }
-    friend mint operator-(const mint& lhs, const mint& rhs) {
-        return mint(lhs) -= rhs;
-    }
-    friend mint operator*(const mint& lhs, const mint& rhs) {
-        return mint(lhs) *= rhs;
-    }
-    friend mint operator/(const mint& lhs, const mint& rhs) {
-        return mint(lhs) /= rhs;
-    }
-    friend bool operator==(const mint& lhs, const mint& rhs) {
-        return lhs._v == rhs._v;
-    }
-    friend bool operator!=(const mint& lhs, const mint& rhs) {
-        return lhs._v != rhs._v;
-    }
-
-  private:
-    unsigned int _v;
-    static internal::barrett bt;
-    static unsigned int umod() { return bt.umod(); }
-};
-template <int id> internal::barrett dynamic_modint<id>::bt(998244353);
-
-using modint998244353 = static_modint<998244353>;
-using modint1000000007 = static_modint<1000000007>;
-using modint = dynamic_modint<-1>;
-
-namespace internal {
-
-template <class T>
-using is_static_modint = std::is_base_of<internal::static_modint_base, T>;
-
-template <class T>
-using is_static_modint_t = std::enable_if_t<is_static_modint<T>::value>;
-
-template <class> struct is_dynamic_modint : public std::false_type {};
-template <int id>
-struct is_dynamic_modint<dynamic_modint<id>> : public std::true_type {};
-
-template <class T>
-using is_dynamic_modint_t = std::enable_if_t<is_dynamic_modint<T>::value>;
-
-}  // namespace internal
 
 }  // namespace atcoder
-
 
 using namespace std;
 using namespace atcoder;
-using mint = modint998244353;
 
-#define N 60
+#ifdef LOCAL
+#include "debug.hpp"
+#define dbg(x...) cerr << "[" << #x << "]=["; _print(x)
+#else
+#define dbg(x...) 
+#endif
 
-mint c[N+1][N+1]; //c[i][j]=(the number of x  s.t. 0<=x<(2^i), popcount(x)=j) for 0<=j<=i<=60
-mint s[N+1][N+1]; //s[i][j]=(the sum    of x  s.t. 0<=x<(2^i), popcount(x)=j) for 0<=j<=i<=60
+#define inf (long long)1e18
+#define endl "\n"
+#define x first
+#define y second
+#define all(x) (x).begin(),(x).end() 
+template <const int &MOD>
+struct modular_int
+{
+    int val;
 
-void preset(void){
-	for(int i=0;i<=N;i++)for(int j=0;j<=N;j++){
-		c[i][j]=0,s[i][j]=0;
-	}
-	c[0][0]=1;
-	for(int i=0;i<60;i++){
-		for(int j=0;j<=i;j++){
-			c[i+1][j+1]+=c[i][j];
-			s[i+1][j+1]+=s[i][j];
-			s[i+1][j+1]+=(c[i][j]*((mint)2).pow(i));
-			c[i+1][j]+=c[i][j];
-			s[i+1][j]+=s[i][j];
-		}
-	}
-	return;
+    modular_int(int64_t v = 0)
+    {
+        if (v < 0)
+            v = v % MOD + MOD;
+        if (v >= MOD)
+            v %= MOD;
+        val = int(v);
+    }
+
+    modular_int(uint64_t v)
+    {
+        if (v >= MOD)
+            v %= MOD;
+        val = int(v);
+    }
+
+    modular_int(int v) : modular_int(int64_t(v)) {}
+    modular_int(unsigned v) : modular_int(uint64_t(v)) {}
+
+    explicit operator int() const { return val; }
+    explicit operator unsigned() const { return val; }
+    explicit operator int64_t() const { return val; }
+    explicit operator uint64_t() const { return val; }
+    explicit operator double() const { return val; }
+    explicit operator long double() const { return val; }
+
+    modular_int &operator+=(const modular_int &other)
+    {
+        val -= MOD - other.val;
+        if (val < 0)
+            val += MOD;
+        return *this;
+    }
+
+    modular_int &operator-=(const modular_int &other)
+    {
+        val -= other.val;
+        if (val < 0)
+            val += MOD;
+        return *this;
+    }
+
+    static unsigned fast_mod(uint64_t x, unsigned m = MOD)
+    {
+#if !defined(_WIN32) || defined(_WIN64)
+        return unsigned(x % m);
+#endif
+        // Optimized mod for Codeforces 32-bit machines.
+        // x must be less than 2^32 * m for this to work, so that x / m fits in an unsigned 32-bit int.
+        unsigned x_high = unsigned(x >> 32), x_low = unsigned(x);
+        unsigned quot, rem;
+        asm("divl %4\n"
+            : "=a"(quot), "=d"(rem)
+            : "d"(x_high), "a"(x_low), "r"(m));
+        return rem;
+    }
+
+    modular_int &operator*=(const modular_int &other)
+    {
+        val = fast_mod(uint64_t(val) * other.val);
+        return *this;
+    }
+
+    modular_int &operator/=(const modular_int &other)
+    {
+        return *this *= other.inv();
+    }
+
+    friend modular_int operator+(const modular_int &a, const modular_int &b) { return modular_int(a) += b; }
+    friend modular_int operator-(const modular_int &a, const modular_int &b) { return modular_int(a) -= b; }
+    friend modular_int operator*(const modular_int &a, const modular_int &b) { return modular_int(a) *= b; }
+    friend modular_int operator/(const modular_int &a, const modular_int &b) { return modular_int(a) /= b; }
+
+    modular_int &operator++()
+    {
+        val = val == MOD - 1 ? 0 : val + 1;
+        return *this;
+    }
+
+    modular_int &operator--()
+    {
+        val = val == 0 ? MOD - 1 : val - 1;
+        return *this;
+    }
+
+    modular_int operator++(int)
+    {
+        modular_int before = *this;
+        ++*this;
+        return before;
+    }
+    modular_int operator--(int)
+    {
+        modular_int before = *this;
+        --*this;
+        return before;
+    }
+
+    modular_int operator-() const
+    {
+        return val == 0 ? 0 : MOD - val;
+    }
+
+    friend bool operator==(const modular_int &a, const modular_int &b) { return a.val == b.val; }
+    friend bool operator!=(const modular_int &a, const modular_int &b) { return a.val != b.val; }
+    friend bool operator<(const modular_int &a, const modular_int &b) { return a.val < b.val; }
+    friend bool operator>(const modular_int &a, const modular_int &b) { return a.val > b.val; }
+    friend bool operator<=(const modular_int &a, const modular_int &b) { return a.val <= b.val; }
+    friend bool operator>=(const modular_int &a, const modular_int &b) { return a.val >= b.val; }
+
+    static const int SAVE_INV = int(1e6) + 5;
+    static modular_int save_inv[SAVE_INV];
+
+    static void prepare_inv()
+    {
+        // Ensures that MOD is prime, which is necessary for the inverse algorithm below.
+        for (int64_t p = 2; p * p <= MOD; p += p % 2 + 1)
+            assert(MOD % p != 0);
+
+        save_inv[0] = 0;
+        save_inv[1] = 1;
+
+        for (int i = 2; i < SAVE_INV; i++)
+            save_inv[i] = save_inv[MOD % i] * (MOD - MOD / i);
+    }
+
+    modular_int inv() const
+    {
+        if (save_inv[1] == 0)
+            prepare_inv();
+
+        if (val < SAVE_INV)
+            return save_inv[val];
+
+        modular_int product = 1;
+        int v = val;
+
+        do
+        {
+            product *= MOD - MOD / v;
+            v = MOD % v;
+        } while (v >= SAVE_INV);
+
+        return product * save_inv[v];
+    }
+
+    modular_int pow(int64_t p) const
+    {
+        if (p < 0)
+            return inv().pow(-p);
+
+        modular_int a = *this, result = 1;
+
+        while (p > 0)
+        {
+            if (p & 1)
+                result *= a;
+
+            p >>= 1;
+
+            if (p > 0)
+                a *= a;
+        }
+
+        return result;
+    }
+
+    friend ostream &operator<<(ostream &os, const modular_int &m)
+    {
+        return os << m.val;
+    }
+};
+template <const int &MOD>
+modular_int<MOD> modular_int<MOD>::save_inv[modular_int<MOD>::SAVE_INV];
+const int MOD = 998244353;
+using mint = modular_int<MOD>;
+void __print(mint x) { cerr << x; }
+
+struct S {
+    mint sum;
+    int size;
+};
+
+S op(S a, S b) {
+    return {a.sum + b.sum, a.size + b.size};
 }
 
-int solve(long long n,int k){
-	int a[N];
-	for(int i=0;i<N;i++){
-		a[i]=n&1;
-		n=(n>>1);
-	}
-	int cur=0;
-	mint offset=0;
-	mint ans=0;
-	for(int i=N-1;i>=0;i--){
-		if(a[i]==1){
-			if(cur<=k){
-				ans+=s[i][k-cur];
-				ans+=offset*c[i][k-cur];
-			}
-			cur++;
-			offset+=((mint)2).pow(i);
-		}
-	}
-	if(cur==k)ans+=offset;
-	return (ans.val());
+S e() {
+    return {mint(0), 0};
 }
 
-int main(void){
-	preset();
-	int t,k;
-	long long n;
-	cin>>t;
-	for(int i=0;i<t;i++){
-		cin>>n>>k;
-		cout<<solve(n,k)<<endl;
-	}
-	return 0;
+struct F {
+    mint x;
+    bool is_set;
+};
+
+S mapping(F f, S s) {
+    if (!f.is_set) return s;
+    return {f.x * s.size, s.size};
+}
+
+F composition(F f, F g) {
+    if (f.is_set) return f;
+    return g;
+}
+
+F id() {
+    return {mint(0), false};
+}
+
+
+void solve(int tc)
+{   
+    int n,m;
+    cin>>n>>m;
+    vector<S>ar(n);
+    for(int i=0;i<n;i++)
+    {
+        int x;
+        cin>>x;
+        ar[i]={x,1};
+    }
+    lazy_segtree<S, op, e, F, mapping, composition, id> seg(ar);
+    for(int i=0;i<m;i++)
+    {
+        int l,r;
+        cin>>l>>r;
+        mint rng=r-l+1;
+        l--,r--;
+        r++;
+        mint v=seg.prod(l,r).sum;
+        v=v/rng;
+        seg.apply(l,r,{v,true});
+    }
+    for(int i=0;i<n;i++) 
+    {
+        cout<<seg.prod(i,i+1).sum<<" ";
+    }
+    cout<<endl;
+
+}   
+int32_t main()      
+{   
+    #ifdef LOCAL1
+        auto begin = std::chrono::high_resolution_clock::now();
+    #endif
+    ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+    int t=1;
+    int tc=1;
+    while (t--)
+    {
+        solve(tc),tc++;
+    }
+    #ifdef LOCAL1
+        auto end = std::chrono::high_resolution_clock::now();
+        cerr << setprecision(4) << fixed;
+        cerr << "-> " << std::chrono::duration_cast<std::chrono::duration<double>>(end - begin).count() << " sec" << endl;
+    #endif
+    return 0;
 }

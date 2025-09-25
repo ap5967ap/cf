@@ -1,0 +1,4 @@
+alias comp="g++ -Wall -Wextra -pedantic -std=c++20 -O2 -Wshadow -DLOCAL1 -Wformat=2 -Wfloat-equal -Wconversion -Wlogical-op -Wshift-overflow=2 -Wduplicated-cond -Wcast-qual -Wcast-align -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_FORTIFY_SOURCE=2 -fsanitize=address -fsanitize=undefined -fno-sanitize-recover -fstack-protector -DLOCAL -Wno-unused-result cp.cpp && ./a.out"
+alias ff="g++ cp.cpp -std=c++20 -DLOCAL -DLOCAL1 && ./a.out 0<in 1>out1 2>out2"
+alias f="./a.out 0<in 1>out1 2>out2"
+

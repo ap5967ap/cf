@@ -160,6 +160,10 @@
     "twosat": "cpp",
     "stdio.h": "c",
     "queue": "cpp",
-    "climits": "cpp"
+    "climits": "cpp",
+    "flat_map": "cpp",
+    "flat_set": "cpp",
+    "stack": "cpp",
+    "lazysegtree": "cpp"
   }
 }

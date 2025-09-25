@@ -1,0 +1,16 @@
+g++ cp.cpp -o cp.out
+g++ oth.cpp -o oth.out
+g++ gen.cpp -o gen.out
+
+for ((i = 1; ; i++)); do
+    echo "Test case: $i"
+    
+    ./gen.out $i > in
+    ./cp.out < in > out1
+    ./oth.out < in > out2
+
+    if ! diff -w out1 out2; then
+        echo "Mismatch found on test case $i"
+        break
+    fi
+done

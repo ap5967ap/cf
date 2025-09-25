@@ -8,14 +8,14 @@ if [ $# -eq 1 ]; then
   fi
 fi
 
-./a.out < in > out1
+./a.out < in > out1 2> /dev/null
 
 if diff -w out1 out2 > /dev/null; then
   echo -e "\033[0;32mOutput matches! ✅\033[0m"
 else
   echo -e "\033[0;31mOutput does NOT match! ❌\033[0m"
   echo "Differences (word-level):"
-  wdiff out2 out1 | sed -e "s/\[\-/$(tput setaf 1)/g" \
+  wdiff out1 out2 | sed -e "s/\[\-/$(tput setaf 1)/g" \
                       -e "s/-\]/$(tput sgr0)/g" \
                       -e "s/{+/$(tput setaf 2)/g" \
                       -e "s/+}/$(tput sgr0)/g"
