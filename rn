@@ -1,11 +1,12 @@
-g++ cp.cpp -o cp.out
-g++ oth.cpp -o oth.out
+g++ cp.cpp -std=c++23 -O3 -o cp.out
+g++ oth.cpp -std=c++23 -O3 -o oth.out
 g++ gen.cpp -o gen.out
 
 for ((i = 1; ; i++)); do
     echo "Test case: $i"
     
     ./gen.out $i > in
+    # ./gen.out $i 
     ./cp.out < in > out1
     ./oth.out < in > out2
 

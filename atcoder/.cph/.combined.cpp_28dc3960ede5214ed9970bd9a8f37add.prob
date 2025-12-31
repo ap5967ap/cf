@@ -1,1 +1,1 @@
-{"name":"Local: combined","url":"/home/ap/cf/atcoder/combined.cpp","tests":[{"id":1739891353602,"input":"1\n7\n1 1 2 2 3 3","output":""}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/home/ap/cf/atcoder/combined.cpp","group":"local","local":true}
+{"name":"Local: combined","url":"/home/ap/cf/atcoder/combined.cpp","tests":[{"id":1739891353602,"input":"7\n300000 100000 499998 499999 200000 400000 500000\n","output":""}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/home/ap/cf/atcoder/combined.cpp","group":"local","local":true}

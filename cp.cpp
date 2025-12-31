@@ -8,303 +8,316 @@ using namespace std;
 #define dbg(x...) 
 #endif
 
+template <const int &MOD>
+struct modular_int
+{
+    int val;
+
+    modular_int(int64_t v = 0)
+    {
+        if (v < 0)
+            v = v % MOD + MOD;
+        if (v >= MOD)
+            v %= MOD;
+        val = int(v);
+    }
+
+    modular_int(uint64_t v)
+    {
+        if (v >= MOD)
+            v %= MOD;
+        val = int(v);
+    }
+
+    modular_int(int v) : modular_int(int64_t(v)) {}
+    modular_int(unsigned v) : modular_int(uint64_t(v)) {}
+
+    explicit operator int() const { return val; }
+    explicit operator unsigned() const { return val; }
+    explicit operator int64_t() const { return val; }
+    explicit operator uint64_t() const { return val; }
+    explicit operator double() const { return val; }
+    explicit operator long double() const { return val; }
+
+    modular_int &operator+=(const modular_int &other)
+    {
+        val -= MOD - other.val;
+        if (val < 0)
+            val += MOD;
+        return *this;
+    }
+
+    modular_int &operator-=(const modular_int &other)
+    {
+        val -= other.val;
+        if (val < 0)
+            val += MOD;
+        return *this;
+    }
+
+    static unsigned fast_mod(uint64_t x, unsigned m = MOD)
+    {
+#if !defined(_WIN32) || defined(_WIN64)
+        return unsigned(x % m);
+#endif
+        // Optimized mod for Codeforces 32-bit machines.
+        // x must be less than 2^32 * m for this to work, so that x / m fits in an unsigned 32-bit int.
+        unsigned x_high = unsigned(x >> 32), x_low = unsigned(x);
+        unsigned quot, rem;
+        asm("divl %4\n"
+            : "=a"(quot), "=d"(rem)
+            : "d"(x_high), "a"(x_low), "r"(m));
+        return rem;
+    }
+
+    modular_int &operator*=(const modular_int &other)
+    {
+        val = fast_mod(uint64_t(val) * other.val);
+        return *this;
+    }
+
+    modular_int &operator/=(const modular_int &other)
+    {
+        return *this *= other.inv();
+    }
+
+    friend modular_int operator+(const modular_int &a, const modular_int &b) { return modular_int(a) += b; }
+    friend modular_int operator-(const modular_int &a, const modular_int &b) { return modular_int(a) -= b; }
+    friend modular_int operator*(const modular_int &a, const modular_int &b) { return modular_int(a) *= b; }
+    friend modular_int operator/(const modular_int &a, const modular_int &b) { return modular_int(a) /= b; }
+
+    modular_int &operator++()
+    {
+        val = val == MOD - 1 ? 0 : val + 1;
+        return *this;
+    }
+
+    modular_int &operator--()
+    {
+        val = val == 0 ? MOD - 1 : val - 1;
+        return *this;
+    }
+
+    modular_int operator++(int)
+    {
+        modular_int before = *this;
+        ++*this;
+        return before;
+    }
+    modular_int operator--(int)
+    {
+        modular_int before = *this;
+        --*this;
+        return before;
+    }
+
+    modular_int operator-() const
+    {
+        return val == 0 ? 0 : MOD - val;
+    }
+
+    friend bool operator==(const modular_int &a, const modular_int &b) { return a.val == b.val; }
+    friend bool operator!=(const modular_int &a, const modular_int &b) { return a.val != b.val; }
+    friend bool operator<(const modular_int &a, const modular_int &b) { return a.val < b.val; }
+    friend bool operator>(const modular_int &a, const modular_int &b) { return a.val > b.val; }
+    friend bool operator<=(const modular_int &a, const modular_int &b) { return a.val <= b.val; }
+    friend bool operator>=(const modular_int &a, const modular_int &b) { return a.val >= b.val; }
+
+    static const int SAVE_INV = int(1e6) + 5;
+    static modular_int save_inv[SAVE_INV];
+
+    static void prepare_inv()
+    {
+        // Ensures that MOD is prime, which is necessary for the inverse algorithm below.
+        for (int64_t p = 2; p * p <= MOD; p += p % 2 + 1)
+            assert(MOD % p != 0);
+
+        save_inv[0] = 0;
+        save_inv[1] = 1;
+
+        for (int i = 2; i < SAVE_INV; i++)
+            save_inv[i] = save_inv[MOD % i] * (MOD - MOD / i);
+    }
+
+    modular_int inv() const
+    {
+        if (save_inv[1] == 0)
+            prepare_inv();
+
+        if (val < SAVE_INV)
+            return save_inv[val];
+
+        modular_int product = 1;
+        int v = val;
+
+        do
+        {
+            product *= MOD - MOD / v;
+            v = MOD % v;
+        } while (v >= SAVE_INV);
+
+        return product * save_inv[v];
+    }
+
+    modular_int pow(int64_t p) const
+    {
+        if (p < 0)
+            return inv().pow(-p);
+
+        modular_int a = *this, result = 1;
+
+        while (p > 0)
+        {
+            if (p & 1)
+                result *= a;
+
+            p >>= 1;
+
+            if (p > 0)
+                a *= a;
+        }
+
+        return result;
+    }
+
+    friend ostream &operator<<(ostream &os, const modular_int &m)
+    {
+        return os << m.val;
+    }
+};
+template <const int &MOD>
+modular_int<MOD> modular_int<MOD>::save_inv[modular_int<MOD>::SAVE_INV];
+const int MOD = 998244353;
+using mint = modular_int<MOD>;
+void __print(mint x) { cerr << x; }
+
 #define inf (long long)1e18
 #define endl "\n"
-#define int long long
+#define int int64_t
 #define x first
 #define y second
 #define all(x) (x).begin(),(x).end() 
-
-template <class S,
-          auto op,
-          auto e,
-          class F,
-          auto mapping,
-          auto composition,
-          auto id>
-struct lazy_segtree
+template<typename T, const int P>
+class combinatorics
 {
+    //combinatorics<mint,2> c(200);
+    //2 is the number whose power will be precomputed
 public:
-    unsigned int bit_ceil(unsigned int n)
+    int n;
+    vector<T> inv, fac, ifac, pw;
+    combinatorics (int n) : n(n), inv(n+1), fac(n+1), ifac(n+1), pw(n+1)
     {
-        unsigned int x = 1;
-        while (x < (unsigned int)(n))
-            x *= 2;
-        return x;
-    }
-    int countr_zero(unsigned int n)
-    {
-        return __builtin_ctz(n);
-    }
-    lazy_segtree() : lazy_segtree(0) {}
-    explicit lazy_segtree(int n) : lazy_segtree(std::vector<S>(n, e())) {}
-    explicit lazy_segtree(const std::vector<S> &v) : _n((int)(v.size()))
-    {
-        size = (int)bit_ceil((unsigned int)(_n));
-        log = countr_zero((unsigned int)size);
-        d = std::vector<S>(2 * size, e());
-        lz = std::vector<F>(size, id());
-        for (int i = 0; i < _n; i++)
-            d[size + i] = v[i];
-        for (int i = size - 1; i >= 1; i--)
-        {
-            update(i);
-        }
+        fac[0] = inv[0] = ifac[0] = pw[0] = T(1);
+ 
+        for(int i = 1; i <= n; i ++)
+            inv[i] = T(1)/T(i), fac[i] = fac[i - 1] * T(i), ifac[i] = ifac[i - 1] * inv[i], pw[i] = pw[i - 1] * T(P);
     }
 
-    void set(int p, S x)
+    T ncr(int n, int r)
     {
-        assert(0 <= p && p < _n);
-        p += size;
-        for (int i = log; i >= 1; i--)
-            push(p >> i);
-        d[p] = x;
-        for (int i = 1; i <= log; i++)
-            update(p >> i);
-    }
-
-    S get(int p)
-    {
-        assert(0 <= p && p < _n);
-        p += size;
-        for (int i = log; i >= 1; i--)
-            push(p >> i);
-        return d[p];
-    }
-
-    S prod(int l, int r)
-    {
-        assert(0 <= l && l <= r && r <= _n);
-        if (l == r)
-            return e();
-
-        l += size;
-        r += size;
-
-        for (int i = log; i >= 1; i--)
-        {
-            if (((l >> i) << i) != l)
-                push(l >> i);
-            if (((r >> i) << i) != r)
-                push((r - 1) >> i);
-        }
-
-        S sml = e(), smr = e();
-        while (l < r)
-        {
-            if (l & 1)
-                sml = op(sml, d[l++]);
-            if (r & 1)
-                smr = op(d[--r], smr);
-            l >>= 1;
-            r >>= 1;
-        }
-
-        return op(sml, smr);
-    }
-
-    S all_prod() { return d[1]; }
-
-    void apply(int p, F f)
-    {
-        assert(0 <= p && p < _n);
-        p += size;
-        for (int i = log; i >= 1; i--)
-            push(p >> i);
-        d[p] = mapping(f, d[p]);
-        for (int i = 1; i <= log; i++)
-            update(p >> i);
-    }
-    void apply(int l, int r, F f)
-    {
-        assert(0 <= l && l <= r && r <= _n);
-        if (l == r)
-            return;
-
-        l += size;
-        r += size;
-
-        for (int i = log; i >= 1; i--)
-        {
-            if (((l >> i) << i) != l)
-                push(l >> i);
-            if (((r >> i) << i) != r)
-                push((r - 1) >> i);
-        }
-
-        {
-            int l2 = l, r2 = r;
-            while (l < r)
-            {
-                if (l & 1)
-                    all_apply(l++, f);
-                if (r & 1)
-                    all_apply(--r, f);
-                l >>= 1;
-                r >>= 1;
-            }
-            l = l2;
-            r = r2;
-        }
-
-        for (int i = 1; i <= log; i++)
-        {
-            if (((l >> i) << i) != l)
-                update(l >> i);
-            if (((r >> i) << i) != r)
-                update((r - 1) >> i);
-        }
-    }
-
-    template <bool (*g)(S)>
-    int max_right(int l)
-    {
-        return max_right(l, [](S x)
-                         { return g(x); });
-    }
-    template <class G>
-    int max_right(int l, G g)
-    {
-        assert(0 <= l && l <= _n);
-        assert(g(e()));
-        if (l == _n)
-            return _n;
-        l += size;
-        for (int i = log; i >= 1; i--)
-            push(l >> i);
-        S sm = e();
-        do
-        {
-            while (l % 2 == 0)
-                l >>= 1;
-            if (!g(op(sm, d[l])))
-            {
-                while (l < size)
-                {
-                    push(l);
-                    l = (2 * l);
-                    if (g(op(sm, d[l])))
-                    {
-                        sm = op(sm, d[l]);
-                        l++;
-                    }
-                }
-                return l - size;
-            }
-            sm = op(sm, d[l]);
-            l++;
-        } while ((l & -l) != l);
-        return _n;
-    }
-
-    template <bool (*g)(S)>
-    int min_left(int r)
-    {
-        return min_left(r, [](S x)
-                        { return g(x); });
-    }
-    template <class G>
-    int min_left(int r, G g)
-    {
-        assert(0 <= r && r <= _n);
-        assert(g(e()));
-        if (r == 0)
+        if(n < r or r < 0)
             return 0;
-        r += size;
-        for (int i = log; i >= 1; i--)
-            push((r - 1) >> i);
-        S sm = e();
-        do
-        {
-            r--;
-            while (r > 1 && (r % 2))
-                r >>= 1;
-            if (!g(op(d[r], sm)))
-            {
-                while (r < size)
-                {
-                    push(r);
-                    r = (2 * r + 1);
-                    if (g(op(d[r], sm)))
-                    {
-                        sm = op(d[r], sm);
-                        r--;
-                    }
-                }
-                return r + 1 - size;
-            }
-            sm = op(d[r], sm);
-        } while ((r & -r) != r);
-        return 0;
-    }
-
-private:
-    int _n, size, log;
-    std::vector<S> d;
-    std::vector<F> lz;
-
-    void update(int k) { d[k] = op(d[2 * k], d[2 * k + 1]); }
-    void all_apply(int k, F f)
-    {
-        d[k] = mapping(f, d[k]);
-        if (k < size)
-            lz[k] = composition(f, lz[k]);
-    }
-    void push(int k)
-    {
-        all_apply(2 * k, lz[k]);
-        all_apply(2 * k + 1, lz[k]);
-        lz[k] = id();
+        return fac[n] * ifac[r] * ifac[n - r];
     }
 };
-/*
-    !index is 0 based [l,r)
-
-    S - segment tree node
-    op(left, right) - monoid merge of two S values 
-    e() - identity element for op
-    F - lazy tag type
-    mapping - apply a tag f to a node value s
-    composition - combine two tags (f applied after g)
-    id - neutral tag (no-op)
-
-    void set(int p, S x) - ar[p] = x
-    S get(int p) - return ar[p]
-
-    S prod(int l, int r) - Combine values in [l, r) via op.
-    S all_prod() == prod for whole array
-
-    void apply(int p, F f) - Apply tag f only to index p.
-    void apply(int l, int r, F f) - Apply tag f to every index in [l, r).
-
-    int max_right(int l, G g) - max r s.t g(l...r-1) is true and g(l...r) is false; true for e()
-    int min_left(int r, G g) - min l s.t g(l...r-1) is true and g(l-1....r-1) is false; true for e()
-
-
-
-    struct S { int sum, size; };
-    S op(S left, S right) { return {left.sum + right.sum, left.size + right.size}; }
-    S e() { return {0, 0}; }
-    struct F { int x; bool is_set; }; // lazy tag type
-    S mapping(F f, S s)  // apply tag f to segment s
-    {
-        if (!f.is_set) return s;
-        return {f.x * s.size, s.size};
-    }
-    
-    F composition(F f, F g) { // Compose two tags: new f after old g
-        if (f.is_set) return f;
-        return g;
-    }
-    F id() { return {0, false}; }
-
-    * constructor - expects vector<S> 
-
-*/
-
+combinatorics<mint,2>c(1e6+1);
 void solve(int tc)
 {   
-    
+    vector<vector<mint>>pre(1e6+1,vector<mint>(100));
+    for(int i=1;i<=1e6;i++)
+    {
+        for(int j=0;j<=min(i,(int)99);j++)
+        {
+            pre[i][j]=c.ncr(i,j);
+            if(j) pre[i][j]+=pre[i][j-1];
+        }
+    }
+    auto cc=[&](int n, int l, int r)->mint //ncl+..+ncr
+    {
+        assert(n<=1e6);
+        assert(l<100);
+        assert(r<100);
+        if(l>r || l<0 || r<0) return 0;
+        mint ret=pre[n][r];
+        if(l) ret-=pre[n][l-1];
+        return ret;
+    };
+    int n;
+    cin>>n;
+    int q;
+    cin>>q;
+    vector<int>f(61);
+    for(int i=1;i<=n;i++)
+    {
+        int a;
+        cin>>a;
+        f[a]++;
+    }
+    dbg("here");
+    auto dfs=[&](int i, int j, int x, mint &ans, bool st, mint &ways,auto &&dfs)->void
+    {
+        if(i<0) 
+        {
+            ans+=ways;
+            return;
+        }
+        st=st|((x&(1LL<<i))!=0);
+        int sm=0;
+        for(int k=i-1;k>=0;k--) sm+=f[k];
+        if(!st)
+        {
+            if(f[i])
+                ans+=ways*(c.pw[f[i]]-1)*c.pw[sm];
+            dfs(i-1,j,x,ans,st,ways,dfs);
+            return;
+        }
+        j=min(i,j);
+        if(j<0)
+        {
+            int sm=0;
+            for(;i>=0;i--) sm+=f[i];
+            ans+=ways*c.pw[sm];
+            return;
+        }
+        if(j>=0 && ((x&(1LL<<j))==0)) j--;
+        int cnt=0;
+        while(j>=0 && ((x&(1LL<<j))!=0)) cnt++,j--;
+        if(cnt>f[i]) return;
+
+        // case 2 loose
+        
+        if(f[i])
+            ans+=ways*(c.pw[f[i]]-cc(f[i],0,cnt))*c.pw[sm];
+
+        // case 1 satisfy current path with i and stay tight;
+        if(f[i])
+            ways*=c.ncr(f[i],cnt);
+
+        dfs(i-1,j,x,ans,st,ways,dfs);
+        // j is previous patch end
+        
+    };
+    while(q--)
+    {
+        int ty,x;
+        cin>>ty>>x;
+        if(ty==1)
+        {
+            f[x]++;
+            n++;
+        }
+        else if(ty==2)
+        {
+            f[x]--;
+            n--;
+        }
+        else
+        {
+            mint ans=0,ways=1;
+            dfs(60,60,x,ans,0,ways,dfs);
+            cout<<ans<<endl;
+        }
+    }
 }   
 int32_t main()      
 {   
@@ -313,7 +326,6 @@ int32_t main()
     #endif
     ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
     int t=1;
-    cin>>t;
     int tc=1;
     while (t--)
     {

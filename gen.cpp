@@ -55,13 +55,11 @@ int32_t main(int argc, char *argv[] )
 {
     srand(stoi(argv[1]));
     cout<<1<<endl;
-    int n=rand(2,4);
-    cout<<n<<" "<<1<<endl;
+    int n=rand(2,5);
+    cout<<n<<endl;
     for(int i=1;i<=n;i++)
     {
-        int a=rand(0,10);
-        cout<<a<<" ";
+        cout<<rand(-5,5)<<" ";
     }
     cout<<endl;
-    cout<<rand(0,20)<<endl;
 }

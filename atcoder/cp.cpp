@@ -1,265 +1,38 @@
 #include <bits/stdc++.h>
-#include <atcoder/lazysegtree>
 using namespace std;
+#include<atcoder/convolution>
 using namespace atcoder;
-
-#ifdef LOCAL
-#include "debug.hpp"
-#define dbg(x...) cerr << "[" << #x << "]=["; _print(x)
-#else
-#define dbg(x...) 
-#endif
-
-#define inf (long long)1e18
-#define endl "\n"
-#define x first
-#define y second
-#define all(x) (x).begin(),(x).end() 
-template <const int &MOD>
-struct modular_int
-{
-    int val;
-
-    modular_int(int64_t v = 0)
-    {
-        if (v < 0)
-            v = v % MOD + MOD;
-        if (v >= MOD)
-            v %= MOD;
-        val = int(v);
-    }
-
-    modular_int(uint64_t v)
-    {
-        if (v >= MOD)
-            v %= MOD;
-        val = int(v);
-    }
-
-    modular_int(int v) : modular_int(int64_t(v)) {}
-    modular_int(unsigned v) : modular_int(uint64_t(v)) {}
-
-    explicit operator int() const { return val; }
-    explicit operator unsigned() const { return val; }
-    explicit operator int64_t() const { return val; }
-    explicit operator uint64_t() const { return val; }
-    explicit operator double() const { return val; }
-    explicit operator long double() const { return val; }
-
-    modular_int &operator+=(const modular_int &other)
-    {
-        val -= MOD - other.val;
-        if (val < 0)
-            val += MOD;
-        return *this;
-    }
-
-    modular_int &operator-=(const modular_int &other)
-    {
-        val -= other.val;
-        if (val < 0)
-            val += MOD;
-        return *this;
-    }
-
-    static unsigned fast_mod(uint64_t x, unsigned m = MOD)
-    {
-#if !defined(_WIN32) || defined(_WIN64)
-        return unsigned(x % m);
-#endif
-        // Optimized mod for Codeforces 32-bit machines.
-        // x must be less than 2^32 * m for this to work, so that x / m fits in an unsigned 32-bit int.
-        unsigned x_high = unsigned(x >> 32), x_low = unsigned(x);
-        unsigned quot, rem;
-        asm("divl %4\n"
-            : "=a"(quot), "=d"(rem)
-            : "d"(x_high), "a"(x_low), "r"(m));
-        return rem;
-    }
-
-    modular_int &operator*=(const modular_int &other)
-    {
-        val = fast_mod(uint64_t(val) * other.val);
-        return *this;
-    }
-
-    modular_int &operator/=(const modular_int &other)
-    {
-        return *this *= other.inv();
-    }
-
-    friend modular_int operator+(const modular_int &a, const modular_int &b) { return modular_int(a) += b; }
-    friend modular_int operator-(const modular_int &a, const modular_int &b) { return modular_int(a) -= b; }
-    friend modular_int operator*(const modular_int &a, const modular_int &b) { return modular_int(a) *= b; }
-    friend modular_int operator/(const modular_int &a, const modular_int &b) { return modular_int(a) /= b; }
-
-    modular_int &operator++()
-    {
-        val = val == MOD - 1 ? 0 : val + 1;
-        return *this;
-    }
-
-    modular_int &operator--()
-    {
-        val = val == 0 ? MOD - 1 : val - 1;
-        return *this;
-    }
-
-    modular_int operator++(int)
-    {
-        modular_int before = *this;
-        ++*this;
-        return before;
-    }
-    modular_int operator--(int)
-    {
-        modular_int before = *this;
-        --*this;
-        return before;
-    }
-
-    modular_int operator-() const
-    {
-        return val == 0 ? 0 : MOD - val;
-    }
-
-    friend bool operator==(const modular_int &a, const modular_int &b) { return a.val == b.val; }
-    friend bool operator!=(const modular_int &a, const modular_int &b) { return a.val != b.val; }
-    friend bool operator<(const modular_int &a, const modular_int &b) { return a.val < b.val; }
-    friend bool operator>(const modular_int &a, const modular_int &b) { return a.val > b.val; }
-    friend bool operator<=(const modular_int &a, const modular_int &b) { return a.val <= b.val; }
-    friend bool operator>=(const modular_int &a, const modular_int &b) { return a.val >= b.val; }
-
-    static const int SAVE_INV = int(1e6) + 5;
-    static modular_int save_inv[SAVE_INV];
-
-    static void prepare_inv()
-    {
-        // Ensures that MOD is prime, which is necessary for the inverse algorithm below.
-        for (int64_t p = 2; p * p <= MOD; p += p % 2 + 1)
-            assert(MOD % p != 0);
-
-        save_inv[0] = 0;
-        save_inv[1] = 1;
-
-        for (int i = 2; i < SAVE_INV; i++)
-            save_inv[i] = save_inv[MOD % i] * (MOD - MOD / i);
-    }
-
-    modular_int inv() const
-    {
-        if (save_inv[1] == 0)
-            prepare_inv();
-
-        if (val < SAVE_INV)
-            return save_inv[val];
-
-        modular_int product = 1;
-        int v = val;
-
-        do
-        {
-            product *= MOD - MOD / v;
-            v = MOD % v;
-        } while (v >= SAVE_INV);
-
-        return product * save_inv[v];
-    }
-
-    modular_int pow(int64_t p) const
-    {
-        if (p < 0)
-            return inv().pow(-p);
-
-        modular_int a = *this, result = 1;
-
-        while (p > 0)
-        {
-            if (p & 1)
-                result *= a;
-
-            p >>= 1;
-
-            if (p > 0)
-                a *= a;
-        }
-
-        return result;
-    }
-
-    friend ostream &operator<<(ostream &os, const modular_int &m)
-    {
-        return os << m.val;
-    }
-};
-template <const int &MOD>
-modular_int<MOD> modular_int<MOD>::save_inv[modular_int<MOD>::SAVE_INV];
-const int MOD = 998244353;
-using mint = modular_int<MOD>;
-void __print(mint x) { cerr << x; }
-
-struct S {
-    mint sum;
-    int size;
-};
-
-S op(S a, S b) {
-    return {a.sum + b.sum, a.size + b.size};
-}
-
-S e() {
-    return {mint(0), 0};
-}
-
-struct F {
-    mint x;
-    bool is_set;
-};
-
-S mapping(F f, S s) {
-    if (!f.is_set) return s;
-    return {f.x * s.size, s.size};
-}
-
-F composition(F f, F g) {
-    if (f.is_set) return f;
-    return g;
-}
-
-F id() {
-    return {mint(0), false};
-}
-
-
+#define ll long long
 void solve(int tc)
 {   
-    int n,m;
-    cin>>n>>m;
-    vector<S>ar(n);
+    int n;
+    cin>>n;
+    vector<int>f(5+1);
+    vector<int>ar;
     for(int i=0;i<n;i++)
     {
-        int x;
-        cin>>x;
-        ar[i]={x,1};
+        int a;
+        cin>>a;
+        ar.push_back(a);
+        f[a]++;
     }
-    lazy_segtree<S, op, e, F, mapping, composition, id> seg(ar);
-    for(int i=0;i<m;i++)
+    ll ans=0;
+    auto c=convolution(f,f);
+    for(int i=0;i<c.size();i++)
     {
-        int l,r;
-        cin>>l>>r;
-        mint rng=r-l+1;
-        l--,r--;
-        r++;
-        mint v=seg.prod(l,r).sum;
-        v=v/rng;
-        seg.apply(l,r,{v,true});
+        cerr<<c[i]<<" ";
     }
-    for(int i=0;i<n;i++) 
+    cerr<<endl;
+    vector<int>f1(c.size());
+    for(int i=0;i<ar.size();i++)
     {
-        cout<<seg.prod(i,i+1).sum<<" ";
+        for(int j=i+1;j<ar.size();j++)
+        {
+            f1[ar[i]+ar[j]]++;
+        }
     }
+    for(int i=0;i<c.size();i++) cout<<f1[i]<<" ";
     cout<<endl;
-
 }   
 int32_t main()      
 {   
