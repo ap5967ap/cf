@@ -1,0 +1,14 @@
+g++ gen.cpp -o gen.out
+g++ cp.cpp -std=c++23 -DLOCAL1 -o cp.out 
+
+for ((i = 1;; i++)); do
+    echo "Test case: $i"
+    ./gen.out $i > in          # generate input
+    ./cp.out < in > out1       # run solution
+    status=$?                  # <-- capture exit code here!
+
+    if [ $status -ne 0 ]; then
+        echo "❌ Failed at test $i with exit code $status"
+        break
+    fi
+done

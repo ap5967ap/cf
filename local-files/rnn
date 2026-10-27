@@ -1,0 +1,18 @@
+g++ cp.cpp -std=c++23 -O3 -o cp.out
+g++ oth.cpp -std=c++23 -O3 -o oth.out
+g++ gen.cpp -std=c++23 -O3 -o gen.out
+g++ check.cpp -std=c++23 -O3 -o check.out
+
+for ((i = 1; ; i++)); do
+    echo "Test case: $i"
+
+    ./gen.out $i > in || break
+    ./cp.out < in > out1
+    ./oth.out < in > out2
+
+    ./check.out in out1 out2
+    if [ $? -ne 0 ]; then
+        echo "Wrong answer on test case $i"
+        break
+    fi
+done
